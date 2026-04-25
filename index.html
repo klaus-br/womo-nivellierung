@@ -120,9 +120,6 @@ h1 { font-size: 18px; font-weight: 500; margin-bottom: 1rem; padding-top: 0.5rem
     </svg>
   </div>
 
-  <!-- Keil-Details -->
-  <div id="keil-details"></div>
-
   <!-- Neigung / Wasserwaage -->
   <div class="card">
     <div class="section-title">Neigung</div>
@@ -137,11 +134,11 @@ h1 { font-size: 18px; font-weight: 500; margin-bottom: 1rem; padding-top: 0.5rem
           <!-- Quer zuerst, dann Längs -->
           <div class="metric">
             <div class="lbl">Quer (β)</div>
-            <div class="val" id="val-beta">–</div>
+            <div class="val" id="val-quer">–</div>
           </div>
           <div class="metric">
             <div class="lbl">Längs (α)</div>
-            <div class="val" id="val-alpha">–</div>
+            <div class="val" id="val-laengs">–</div>
           </div>
         </div>
       </div>
@@ -232,8 +229,8 @@ function onData(event) {
     const d = JSON.parse(val);
     alpha = d.a;
     beta  = d.b;
-    document.getElementById('val-alpha').textContent = alpha.toFixed(1) + '°';
-    document.getElementById('val-beta').textContent  = beta.toFixed(1)  + '°';
+    document.getElementById('val-laengs').textContent = alpha.toFixed(1) + '°';
+    document.getElementById('val-quer').textContent   = beta.toFixed(1)  + '°';
     updateBubble();
     berechne();
   } catch(e) {}
@@ -294,7 +291,6 @@ function berechne() {
 
   const svgMap = { VL:'r-vl', VR:'r-vr', HL:'r-hl', HR:'r-hr' };
   const lblMap = { VL:'lbl-vl', VR:'lbl-vr', HL:'lbl-hl', HR:'lbl-hr' };
-  const names  = { VL:'Vorne links', VR:'Vorne rechts', HL:'Hinten links', HR:'Hinten rechts' };
 
   // Alle Räder zurücksetzen
   ['VL','VR','HL','HR'].forEach(id => {
@@ -303,15 +299,12 @@ function berechne() {
     document.getElementById(lblMap[id]).setAttribute('visibility', 'hidden');
   });
 
-  const detailEl = document.getElementById('keil-details');
-
   // Waagerecht → alle Räder grün
   if (Math.abs(alpha) < 0.3 && Math.abs(beta) < 0.3) {
     ['VL','VR','HL','HR'].forEach(id => {
       document.getElementById(svgMap[id]).setAttribute('fill', '#9FE1CB');
       document.getElementById(svgMap[id]).setAttribute('stroke', '#1D9E75');
     });
-    detailEl.innerHTML = '<div class="alert-ok">✓ Fahrzeug ist bereits waagerecht.</div>';
     return;
   }
 
@@ -330,18 +323,22 @@ function berechne() {
     lbl.setAttribute('fill', lblColor(cm, maxK));
   });
 
-  // Detail-Boxen
-  detailEl.innerHTML = '<div class="section-title">Empfehlung</div>' +
-    [keil1, keil2].map(k => {
-      const cm  = parseFloat(k[1].toFixed(1));
-      const cls = keilClass(cm, maxK);
-      const sub = cm > maxK ? 'Nicht möglich – Fahrzeug neu positionieren' : 'Keil unterlegen';
-      return '<div class="keil-box ' + cls + '">' +
-        '<div><div class="keil-title">' + names[k[0]] + ' (' + k[0] + ')</div>' +
-        '<div class="keil-sub">' + sub + '</div></div>' +
-        '<div class="keil-cm">' + cm.toFixed(1) + ' cm</div></div>';
-    }).join('');
 }
+
+// ── Wake Lock: Bildschirm nicht abdunkeln ──────────────────
+let wakeLock = null;
+async function requestWakeLock() {
+  if ('wakeLock' in navigator) {
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+    } catch(e) {}
+  }
+}
+// Wake Lock neu anfordern wenn App wieder sichtbar wird
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') requestWakeLock();
+});
+requestWakeLock();
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
