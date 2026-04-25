@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1D9E75">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nivellierung">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Womo Nivellierung</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; overscroll-behavior: none; }
+.app { max-width: 480px; margin: 0 auto; padding: env(safe-area-inset-top, 1rem) 1rem 2rem; }
+h1 { font-size: 18px; font-weight: 500; margin-bottom: 1rem; padding-top: 0.5rem; }
+.card { background: #fff; border: 0.5px solid rgba(0,0,0,0.12); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+.btn { width: 100%; padding: 13px; border-radius: 8px; border: 0.5px solid rgba(0,0,0,0.2); background: transparent; color: #1a1a1a; font-size: 15px; cursor: pointer; font-family: inherit; }
+.btn:active { opacity: 0.7; transform: scale(0.98); }
+.btn-primary { background: #1D9E75; color: #fff; border-color: #0F6E56; font-weight: 500; }
+.btn-sm { font-size: 13px; padding: 9px 12px; margin-top: 8px; color: #555; }
+.section-title { font-size: 11px; font-weight: 500; color: #888; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.metric { background: #f5f5f0; border-radius: 8px; padding: 10px 12px; }
+.metric .lbl { font-size: 12px; color: #888; margin-bottom: 2px; }
+.metric .val { font-size: 22px; font-weight: 500; }
+.status-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.name-big { font-size: 16px; font-weight: 500; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; flex-shrink: 0; }
+.dot-red { background: #E24B4A; }
+.dot-green { background: #1D9E75; }
+.dot-amber { background: #EF9F27; }
+.status-label { font-size: 13px; color: #666; display: flex; align-items: center; }
+.input-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.input-row label { font-size: 13px; color: #555; flex: 1; }
+.input-row input { width: 80px; padding: 8px; border: 0.5px solid rgba(0,0,0,0.2); border-radius: 8px; font-size: 14px; text-align: right; background: #fff; font-family: inherit; }
+.bubble-wrap { display: flex; align-items: center; gap: 1rem; }
+.bubble { width: 110px; height: 110px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,0.15); position: relative; flex-shrink: 0; background: #f9f9f9; }
+.bubble-cross  { position: absolute; top: 50%; left: 10%; right: 10%; height: 0.5px; background: rgba(0,0,0,0.2); transform: translateY(-50%); }
+.bubble-cross2 { position: absolute; left: 50%; top: 10%; bottom: 10%; width: 0.5px; background: rgba(0,0,0,0.2); transform: translateX(-50%); }
+.bubble-ball { width: 22px; height: 22px; border-radius: 50%; background: #1D9E75; position: absolute; transform: translate(-50%, -50%); transition: left 0.35s ease, top 0.35s ease, background 0.3s; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+.alert { border-radius: 10px; padding: 12px 14px; margin-bottom: 1rem; font-size: 14px; line-height: 1.5; }
+.alert-ok  { background: #E1F5EE; color: #085041; border: 0.5px solid #1D9E75; }
+.alert-err { background: #FCEBEB; color: #A32D2D; border: 0.5px solid #E24B4A; }
+.womo-svg { width: 100%; }
+.keil-box { border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.keil-ok   { background: #E1F5EE; border: 0.5px solid #1D9E75; }
+.keil-warn { background: #FAEEDA; border: 0.5px solid #EF9F27; }
+.keil-title { font-size: 14px; font-weight: 500; color: #085041; }
+.keil-sub   { font-size: 12px; color: #0F6E56; margin-top: 2px; }
+.keil-cm    { font-size: 24px; font-weight: 500; color: #085041; }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Womo Nivellierung</h1>
+
+  <!-- Verbindung -->
+  <div class="card">
+    <div class="status-row">
+      <div class="name-big">ESP32 Sensor</div>
+      <div class="status-label">
+        <span class="dot dot-red" id="dot"></span>
+        <span id="status-text">Getrennt</span>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="btn-connect" onclick="connectBLE()">Bluetooth verbinden</button>
+  </div>
+
+  <!-- Neigung / Wasserwaage -->
+  <div class="card">
+    <div class="section-title">Neigung</div>
+    <div class="bubble-wrap">
+      <div class="bubble">
+        <div class="bubble-cross"></div>
+        <div class="bubble-cross2"></div>
+        <div class="bubble-ball" id="bubble" style="left:50%;top:50%;"></div>
+      </div>
+      <div style="flex:1;">
+        <div class="grid2">
+          <div class="metric">
+            <div class="lbl">Längs (α)</div>
+            <div class="val" id="val-alpha">–</div>
+          </div>
+          <div class="metric">
+            <div class="lbl">Quer (β)</div>
+            <div class="val" id="val-beta">–</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fahrzeugmaße -->
+  <div class="card">
+    <div class="section-title">Fahrzeugmaße</div>
+    <div class="input-row">
+      <label>Spurbreite (cm)</label>
+      <input type="number" id="inp-spur" value="190" min="100" max="300" onchange="berechne()">
+    </div>
+    <div class="input-row">
+      <label>Radstand (cm)</label>
+      <input type="number" id="inp-rad" value="380" min="150" max="600" onchange="berechne()">
+    </div>
+    <div class="input-row">
+      <label>Max. Keilhöhe (cm)</label>
+      <input type="number" id="inp-maxkeil" value="15" min="5" max="30" onchange="berechne()">
+    </div>
+    <button class="btn btn-sm" onclick="calibrate()">Aktuelle Lage als Nullpunkt kalibrieren</button>
+  </div>
+
+  <!-- Statusmeldung -->
+  <div id="result-msg" style="display:none;"></div>
+
+  <!-- Draufsicht SVG -->
+  <div class="card">
+    <div class="section-title">Draufsicht – Unterlegkeile</div>
+    <svg class="womo-svg" viewBox="0 0 300 190">
+      <rect x="65" y="22" width="170" height="146" rx="10" fill="none" stroke="#ccc" stroke-width="1.5"/>
+      <text x="150" y="98"  text-anchor="middle" font-size="11" fill="#bbb">VORNE</text>
+      <text x="150" y="113" text-anchor="middle" font-size="13" fill="#bbb">▲</text>
+      <rect id="r-vl" x="34"  y="28"  width="36" height="44" rx="5" fill="#eee" stroke="#ccc" stroke-width="1"/>
+      <text x="52"  y="54"  text-anchor="middle" font-size="10" fill="#666">VL</text>
+      <rect id="r-vr" x="230" y="28"  width="36" height="44" rx="5" fill="#eee" stroke="#ccc" stroke-width="1"/>
+      <text x="248" y="54"  text-anchor="middle" font-size="10" fill="#666">VR</text>
+      <rect id="r-hl" x="34"  y="118" width="36" height="44" rx="5" fill="#eee" stroke="#ccc" stroke-width="1"/>
+      <text x="52"  y="143" text-anchor="middle" font-size="10" fill="#666">HL</text>
+      <rect id="r-hr" x="230" y="118" width="36" height="44" rx="5" fill="#eee" stroke="#ccc" stroke-width="1"/>
+      <text x="248" y="143" text-anchor="middle" font-size="10" fill="#666">HR</text>
+      <text id="lbl-vl" x="52"  y="79"  text-anchor="middle" font-size="9" fill="#085041" visibility="hidden">–</text>
+      <text id="lbl-vr" x="248" y="79"  text-anchor="middle" font-size="9" fill="#085041" visibility="hidden">–</text>
+      <text id="lbl-hl" x="52"  y="169" text-anchor="middle" font-size="9" fill="#085041" visibility="hidden">–</text>
+      <text id="lbl-hr" x="248" y="169" text-anchor="middle" font-size="9" fill="#085041" visibility="hidden">–</text>
+    </svg>
+  </div>
+
+  <!-- Keil-Details -->
+  <div id="keil-details"></div>
+</div>
+
+<script>
+const SERVICE_UUID = '12345678-1234-1234-1234-123456789abc';
+const CHAR_UUID    = 'abcd1234-ab12-cd34-ef56-abcdef123456';
+let bleChar = null;
+let alpha = 0, beta = 0;
+
+// Einstellungen aus localStorage laden
+function loadSettings() {
+  ['inp-spur','inp-rad','inp-maxkeil'].forEach(id => {
+    const saved = localStorage.getItem(id);
+    if (saved) document.getElementById(id).value = saved;
+  });
+}
+function saveSettings() {
+  ['inp-spur','inp-rad','inp-maxkeil'].forEach(id => {
+    localStorage.setItem(id, document.getElementById(id).value);
+  });
+}
+document.querySelectorAll('.input-row input').forEach(el => {
+  el.addEventListener('change', saveSettings);
+});
+
+function setStatus(text, color) {
+  document.getElementById('status-text').textContent = text;
+  document.getElementById('dot').className = 'dot dot-' + color;
+}
+
+async function connectBLE() {
+  if (!navigator.bluetooth) {
+    alert('Web Bluetooth wird nicht unterstützt.\nBitte Chrome auf Android verwenden.');
+    return;
+  }
+  const btn = document.getElementById('btn-connect');
+  try {
+    setStatus('Verbinde...', 'amber');
+    btn.disabled = true;
+    const device = await navigator.bluetooth.requestDevice({
+      filters: [{ name: 'Womo-Nivellierung' }],
+      optionalServices: [SERVICE_UUID]
+    });
+    const server  = await device.gatt.connect();
+    const service = await server.getPrimaryService(SERVICE_UUID);
+    bleChar = await service.getCharacteristic(CHAR_UUID);
+    await bleChar.startNotifications();
+    bleChar.addEventListener('characteristicvaluechanged', onData);
+    device.addEventListener('gattserverdisconnected', () => {
+      bleChar = null;
+      setStatus('Getrennt', 'red');
+      btn.textContent = 'Erneut verbinden';
+      btn.disabled = false;
+    });
+    setStatus('Verbunden', 'green');
+    btn.textContent = '✓ Verbunden';
+  } catch(e) {
+    setStatus('Getrennt', 'red');
+    btn.disabled = false;
+    if (e.name !== 'NotFoundError') alert('Fehler: ' + e.message);
+  }
+}
+
+function onData(event) {
+  try {
+    const val = new TextDecoder().decode(event.target.value);
+    const d = JSON.parse(val);
+    alpha = d.a;
+    beta  = d.b;
+    document.getElementById('val-alpha').textContent = alpha.toFixed(1) + '°';
+    document.getElementById('val-beta').textContent  = beta.toFixed(1)  + '°';
+    updateBubble();
+    berechne();
+  } catch(e) {}
+}
+
+function updateBubble() {
+  const maxT = 10;
+  const cx = 50 + Math.max(-42, Math.min(42, (beta  / maxT) * 42));
+  const cy = 50 + Math.max(-42, Math.min(42, (alpha / maxT) * 42));
+  const b = document.getElementById('bubble');
+  b.style.left = cx + '%';
+  b.style.top  = cy + '%';
+  b.style.background = (Math.abs(alpha) < 0.5 && Math.abs(beta) < 0.5) ? '#1D9E75' : '#E24B4A';
+}
+
+async function calibrate() {
+  if (!bleChar) { alert('Bitte erst verbinden.'); return; }
+  try {
+    await bleChar.writeValue(new TextEncoder().encode('CAL'));
+    alert('Kalibrierung gespeichert.');
+  } catch(e) {
+    alert('Fehler: ' + e.message);
+  }
+}
+
+function berechne() {
+  const spur = parseFloat(document.getElementById('inp-spur').value);
+  const rad  = parseFloat(document.getElementById('inp-rad').value);
+  const maxK = parseFloat(document.getElementById('inp-maxkeil').value);
+  const aRad = alpha * Math.PI / 180;
+  const bRad = beta  * Math.PI / 180;
+
+  const hoehen = {
+    VL:  0,
+    VR: -Math.tan(bRad) * spur,
+    HL: -Math.tan(aRad) * rad,
+    HR: -Math.tan(aRad) * rad - Math.tan(bRad) * spur
+  };
+  const minH = Math.min(...Object.values(hoehen));
+  const rel  = {};
+  for (const k in hoehen) rel[k] = hoehen[k] - minH;
+  const sorted = Object.entries(rel).sort((a, b) => b[1] - a[1]);
+
+  const svgMap  = { VL:'r-vl',   VR:'r-vr',   HL:'r-hl',   HR:'r-hr'   };
+  const lblMap  = { VL:'lbl-vl', VR:'lbl-vr', HL:'lbl-hl', HR:'lbl-hr' };
+  const names   = { VL:'Vorne links', VR:'Vorne rechts', HL:'Hinten links', HR:'Hinten rechts' };
+
+  ['VL','VR','HL','HR'].forEach(id => {
+    document.getElementById(svgMap[id]).setAttribute('fill', '#eee');
+    document.getElementById(svgMap[id]).setAttribute('stroke', '#ccc');
+    document.getElementById(lblMap[id]).setAttribute('visibility', 'hidden');
+  });
+
+  const msgEl    = document.getElementById('result-msg');
+  const detailEl = document.getElementById('keil-details');
+
+  if (Math.abs(alpha) < 0.3 && Math.abs(beta) < 0.3) {
+    msgEl.className = 'alert alert-ok';
+    msgEl.innerHTML = '✓ Fahrzeug ist bereits waagerecht.';
+    msgEl.style.display = 'block';
+    detailEl.innerHTML = '';
+    return;
+  }
+
+  const keil1 = sorted[0];
+  const keil2 = sorted[1];
+  const h1 = parseFloat(keil1[1].toFixed(1));
+
+  if (h1 > maxK) {
+    msgEl.className = 'alert alert-err';
+    msgEl.innerHTML = '✗ Nicht möglich: ' + h1 + ' cm benötigt, Maximum ' + maxK + ' cm.<br>Fahrzeug neu positionieren.';
+    msgEl.style.display = 'block';
+    detailEl.innerHTML = '';
+    return;
+  }
+
+  msgEl.style.display = 'none';
+
+  [keil1, keil2].forEach(k => {
+    document.getElementById(svgMap[k[0]]).setAttribute('fill', '#9FE1CB');
+    document.getElementById(svgMap[k[0]]).setAttribute('stroke', '#1D9E75');
+    const lbl = document.getElementById(lblMap[k[0]]);
+    lbl.setAttribute('visibility', 'visible');
+    lbl.textContent = parseFloat(k[1]).toFixed(1) + ' cm';
+  });
+
+  detailEl.innerHTML = '<div class="section-title">Empfehlung</div>' +
+    [keil1, keil2].map(k => {
+      const cm  = parseFloat(k[1]).toFixed(1);
+      const cls = parseFloat(cm) > maxK * 0.8 ? 'keil-warn' : 'keil-ok';
+      return '<div class="keil-box ' + cls + '">' +
+        '<div><div class="keil-title">' + names[k[0]] + ' (' + k[0] + ')</div>' +
+        '<div class="keil-sub">Keil unterlegen</div></div>' +
+        '<div class="keil-cm">' + cm + ' cm</div></div>';
+    }).join('');
+}
+
+// Service Worker registrieren (Offline-Fähigkeit)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+loadSettings();
+berechne();
+</script>
+</body>
+</html>
