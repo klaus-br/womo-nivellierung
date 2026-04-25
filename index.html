@@ -177,7 +177,7 @@ async function connectBLE() {
     setStatus('Verbinde...', 'amber');
     btn.disabled = true;
     const device = await navigator.bluetooth.requestDevice({
-      filters: [{ name: 'Womo-Nivellierung' }],
+      acceptAllDevices: true,
       optionalServices: [SERVICE_UUID]
     });
     const server  = await device.gatt.connect();
