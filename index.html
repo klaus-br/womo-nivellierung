@@ -41,16 +41,24 @@ h1 { font-size: 18px; font-weight: 500; margin-bottom: 1rem; padding-top: 0.5rem
 .bubble-cross  { position: absolute; top: 50%; left: 10%; right: 10%; height: 0.5px; background: rgba(0,0,0,0.2); transform: translateY(-50%); }
 .bubble-cross2 { position: absolute; left: 50%; top: 10%; bottom: 10%; width: 0.5px; background: rgba(0,0,0,0.2); transform: translateX(-50%); }
 .bubble-ball { width: 22px; height: 22px; border-radius: 50%; background: #1D9E75; position: absolute; transform: translate(-50%, -50%); transition: left 0.35s ease, top 0.35s ease, background 0.3s; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
-.alert { border-radius: 10px; padding: 12px 14px; margin-bottom: 1rem; font-size: 14px; line-height: 1.5; }
-.alert-ok  { background: #E1F5EE; color: #085041; border: 0.5px solid #1D9E75; }
-.alert-err { background: #FCEBEB; color: #A32D2D; border: 0.5px solid #E24B4A; }
+.alert-ok { background: #E1F5EE; color: #085041; border: 0.5px solid #1D9E75; border-radius: 10px; padding: 12px 14px; margin-bottom: 1rem; font-size: 14px; }
 .womo-svg { width: 100%; }
 .keil-box { border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
 .keil-ok   { background: #E1F5EE; border: 0.5px solid #1D9E75; }
 .keil-warn { background: #FAEEDA; border: 0.5px solid #EF9F27; }
-.keil-title { font-size: 14px; font-weight: 500; color: #085041; }
-.keil-sub   { font-size: 12px; color: #0F6E56; margin-top: 2px; }
-.keil-cm    { font-size: 24px; font-weight: 500; color: #085041; }
+.keil-err  { background: #FCEBEB; border: 0.5px solid #E24B4A; }
+.keil-ok .keil-title   { color: #085041; }
+.keil-warn .keil-title { color: #7A5000; }
+.keil-err .keil-title  { color: #A32D2D; }
+.keil-title { font-size: 14px; font-weight: 500; }
+.keil-sub   { font-size: 12px; margin-top: 2px; }
+.keil-ok .keil-sub   { color: #0F6E56; }
+.keil-warn .keil-sub { color: #9A6400; }
+.keil-err .keil-sub  { color: #C04040; }
+.keil-cm { font-size: 24px; font-weight: 500; }
+.keil-ok .keil-cm   { color: #085041; }
+.keil-warn .keil-cm { color: #7A5000; }
+.keil-err .keil-cm  { color: #A32D2D; }
 </style>
 </head>
 <body>
@@ -69,6 +77,52 @@ h1 { font-size: 18px; font-weight: 500; margin-bottom: 1rem; padding-top: 0.5rem
     <button class="btn btn-primary" id="btn-connect" onclick="connectBLE()">Bluetooth verbinden</button>
   </div>
 
+  <!-- Draufsicht groß, oben -->
+  <div class="card">
+    <div class="section-title">Draufsicht – Unterlegkeile</div>
+    <svg class="womo-svg" viewBox="0 0 320 270">
+
+      <!-- Karosserie -->
+      <rect x="78" y="68" width="164" height="178" rx="8" fill="#f0f0ec" stroke="#bbb" stroke-width="1.5"/>
+
+      <!-- Schnauze / Motorhaube vorne -->
+      <path d="M98,68 Q160,20 222,68" fill="#e4e4de" stroke="#bbb" stroke-width="1.5"/>
+      <!-- Windschutzscheibe -->
+      <path d="M104,68 Q160,36 216,68" fill="none" stroke="#ccc" stroke-width="1" stroke-dasharray="4,3"/>
+      <!-- Kühlergrillschlitze angedeutet -->
+      <line x1="140" y1="34" x2="140" y2="44" stroke="#ccc" stroke-width="1"/>
+      <line x1="160" y1="28" x2="160" y2="38" stroke="#ccc" stroke-width="1"/>
+      <line x1="180" y1="34" x2="180" y2="44" stroke="#ccc" stroke-width="1"/>
+
+      <!-- Fahrtrichtungstext -->
+      <text x="160" y="168" text-anchor="middle" font-size="10" fill="#ccc">VORNE ▲</text>
+
+      <!-- Rad VL -->
+      <rect id="r-vl" x="32" y="70" width="50" height="64" rx="7" fill="#ddd" stroke="#bbb" stroke-width="1.5"/>
+      <text x="57" y="105" text-anchor="middle" font-size="12" font-weight="500" fill="#555">VL</text>
+      <text id="lbl-vl" x="57" y="122" text-anchor="middle" font-size="10" font-weight="500" fill="#085041" visibility="hidden">–</text>
+
+      <!-- Rad VR -->
+      <rect id="r-vr" x="238" y="70" width="50" height="64" rx="7" fill="#ddd" stroke="#bbb" stroke-width="1.5"/>
+      <text x="263" y="105" text-anchor="middle" font-size="12" font-weight="500" fill="#555">VR</text>
+      <text id="lbl-vr" x="263" y="122" text-anchor="middle" font-size="10" font-weight="500" fill="#085041" visibility="hidden">–</text>
+
+      <!-- Rad HL -->
+      <rect id="r-hl" x="32" y="182" width="50" height="64" rx="7" fill="#ddd" stroke="#bbb" stroke-width="1.5"/>
+      <text x="57" y="217" text-anchor="middle" font-size="12" font-weight="500" fill="#555">HL</text>
+      <text id="lbl-hl" x="57" y="234" text-anchor="middle" font-size="10" font-weight="500" fill="#085041" visibility="hidden">–</text>
+
+      <!-- Rad HR -->
+      <rect id="r-hr" x="238" y="182" width="50" height="64" rx="7" fill="#ddd" stroke="#bbb" stroke-width="1.5"/>
+      <text x="263" y="217" text-anchor="middle" font-size="12" font-weight="500" fill="#555">HR</text>
+      <text id="lbl-hr" x="263" y="234" text-anchor="middle" font-size="10" font-weight="500" fill="#085041" visibility="hidden">–</text>
+
+    </svg>
+  </div>
+
+  <!-- Keil-Details -->
+  <div id="keil-details"></div>
+
   <!-- Neigung / Wasserwaage -->
   <div class="card">
     <div class="section-title">Neigung</div>
@@ -80,20 +134,21 @@ h1 { font-size: 18px; font-weight: 500; margin-bottom: 1rem; padding-top: 0.5rem
       </div>
       <div style="flex:1;">
         <div class="grid2">
-          <div class="metric">
-            <div class="lbl">Längs (α)</div>
-            <div class="val" id="val-alpha">–</div>
-          </div>
+          <!-- Quer zuerst, dann Längs -->
           <div class="metric">
             <div class="lbl">Quer (β)</div>
             <div class="val" id="val-beta">–</div>
+          </div>
+          <div class="metric">
+            <div class="lbl">Längs (α)</div>
+            <div class="val" id="val-alpha">–</div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Fahrzeugmaße -->
+  <!-- Fahrzeugmaße unten -->
   <div class="card">
     <div class="section-title">Fahrzeugmaße</div>
     <div class="input-row">
@@ -111,42 +166,13 @@ h1 { font-size: 18px; font-weight: 500; margin-bottom: 1rem; padding-top: 0.5rem
     <button class="btn btn-sm" onclick="calibrate()">Aktuelle Lage als Nullpunkt kalibrieren</button>
   </div>
 
-  <!-- Statusmeldung -->
-  <div id="result-msg" style="display:none;"></div>
-
-  <!-- Draufsicht SVG -->
-  <div class="card">
-    <div class="section-title">Draufsicht – Unterlegkeile</div>
-    <svg class="womo-svg" viewBox="0 0 300 190">
-      <rect x="65" y="22" width="170" height="146" rx="10" fill="none" stroke="#ccc" stroke-width="1.5"/>
-      <text x="150" y="98"  text-anchor="middle" font-size="11" fill="#bbb">VORNE</text>
-      <text x="150" y="113" text-anchor="middle" font-size="13" fill="#bbb">▲</text>
-      <rect id="r-vl" x="34"  y="28"  width="36" height="44" rx="5" fill="#eee" stroke="#ccc" stroke-width="1"/>
-      <text x="52"  y="54"  text-anchor="middle" font-size="10" fill="#666">VL</text>
-      <rect id="r-vr" x="230" y="28"  width="36" height="44" rx="5" fill="#eee" stroke="#ccc" stroke-width="1"/>
-      <text x="248" y="54"  text-anchor="middle" font-size="10" fill="#666">VR</text>
-      <rect id="r-hl" x="34"  y="118" width="36" height="44" rx="5" fill="#eee" stroke="#ccc" stroke-width="1"/>
-      <text x="52"  y="143" text-anchor="middle" font-size="10" fill="#666">HL</text>
-      <rect id="r-hr" x="230" y="118" width="36" height="44" rx="5" fill="#eee" stroke="#ccc" stroke-width="1"/>
-      <text x="248" y="143" text-anchor="middle" font-size="10" fill="#666">HR</text>
-      <text id="lbl-vl" x="52"  y="79"  text-anchor="middle" font-size="9" fill="#085041" visibility="hidden">–</text>
-      <text id="lbl-vr" x="248" y="79"  text-anchor="middle" font-size="9" fill="#085041" visibility="hidden">–</text>
-      <text id="lbl-hl" x="52"  y="169" text-anchor="middle" font-size="9" fill="#085041" visibility="hidden">–</text>
-      <text id="lbl-hr" x="248" y="169" text-anchor="middle" font-size="9" fill="#085041" visibility="hidden">–</text>
-    </svg>
-  </div>
-
-  <!-- Keil-Details -->
-  <div id="keil-details"></div>
 </div>
-
 <script>
 const SERVICE_UUID = '12345678-1234-1234-1234-123456789abc';
 const CHAR_UUID    = 'abcd1234-ab12-cd34-ef56-abcdef123456';
 let bleChar = null;
 let alpha = 0, beta = 0;
 
-// Einstellungen aus localStorage laden
 function loadSettings() {
   ['inp-spur','inp-rad','inp-maxkeil'].forEach(id => {
     const saved = localStorage.getItem(id);
@@ -228,9 +254,24 @@ async function calibrate() {
   try {
     await bleChar.writeValue(new TextEncoder().encode('CAL'));
     alert('Kalibrierung gespeichert.');
-  } catch(e) {
-    alert('Fehler: ' + e.message);
-  }
+  } catch(e) { alert('Fehler: ' + e.message); }
+}
+
+// Reifenfarbe: grün <2cm, gelb 2–maxK, rot >maxK
+function tireColor(cm, maxK) {
+  if (cm > maxK) return { fill: '#FFCCCC', stroke: '#E24B4A' };
+  if (cm >= 2)   return { fill: '#FFE8A0', stroke: '#EF9F27' };
+  return               { fill: '#9FE1CB', stroke: '#1D9E75' };
+}
+function keilClass(cm, maxK) {
+  if (cm > maxK) return 'keil-err';
+  if (cm >= 2)   return 'keil-warn';
+  return 'keil-ok';
+}
+function lblColor(cm, maxK) {
+  if (cm > maxK) return '#A32D2D';
+  if (cm >= 2)   return '#7A5000';
+  return '#085041';
 }
 
 function berechne() {
@@ -251,65 +292,60 @@ function berechne() {
   for (const k in hoehen) rel[k] = hoehen[k] - minH;
   const sorted = Object.entries(rel).sort((a, b) => b[1] - a[1]);
 
-  const svgMap  = { VL:'r-vl',   VR:'r-vr',   HL:'r-hl',   HR:'r-hr'   };
-  const lblMap  = { VL:'lbl-vl', VR:'lbl-vr', HL:'lbl-hl', HR:'lbl-hr' };
-  const names   = { VL:'Vorne links', VR:'Vorne rechts', HL:'Hinten links', HR:'Hinten rechts' };
+  const svgMap = { VL:'r-vl', VR:'r-vr', HL:'r-hl', HR:'r-hr' };
+  const lblMap = { VL:'lbl-vl', VR:'lbl-vr', HL:'lbl-hl', HR:'lbl-hr' };
+  const names  = { VL:'Vorne links', VR:'Vorne rechts', HL:'Hinten links', HR:'Hinten rechts' };
 
+  // Alle Räder zurücksetzen
   ['VL','VR','HL','HR'].forEach(id => {
-    document.getElementById(svgMap[id]).setAttribute('fill', '#eee');
-    document.getElementById(svgMap[id]).setAttribute('stroke', '#ccc');
+    document.getElementById(svgMap[id]).setAttribute('fill', '#ddd');
+    document.getElementById(svgMap[id]).setAttribute('stroke', '#bbb');
     document.getElementById(lblMap[id]).setAttribute('visibility', 'hidden');
   });
 
-  const msgEl    = document.getElementById('result-msg');
   const detailEl = document.getElementById('keil-details');
 
+  // Waagerecht → alle Räder grün
   if (Math.abs(alpha) < 0.3 && Math.abs(beta) < 0.3) {
-    msgEl.className = 'alert alert-ok';
-    msgEl.innerHTML = '✓ Fahrzeug ist bereits waagerecht.';
-    msgEl.style.display = 'block';
-    detailEl.innerHTML = '';
+    ['VL','VR','HL','HR'].forEach(id => {
+      document.getElementById(svgMap[id]).setAttribute('fill', '#9FE1CB');
+      document.getElementById(svgMap[id]).setAttribute('stroke', '#1D9E75');
+    });
+    detailEl.innerHTML = '<div class="alert-ok">✓ Fahrzeug ist bereits waagerecht.</div>';
     return;
   }
 
   const keil1 = sorted[0];
   const keil2 = sorted[1];
-  const h1 = parseFloat(keil1[1].toFixed(1));
 
-  if (h1 > maxK) {
-    msgEl.className = 'alert alert-err';
-    msgEl.innerHTML = '✗ Nicht möglich: ' + h1 + ' cm benötigt, Maximum ' + maxK + ' cm.<br>Fahrzeug neu positionieren.';
-    msgEl.style.display = 'block';
-    detailEl.innerHTML = '';
-    return;
-  }
-
-  msgEl.style.display = 'none';
-
+  // Räder einfärben
   [keil1, keil2].forEach(k => {
-    document.getElementById(svgMap[k[0]]).setAttribute('fill', '#9FE1CB');
-    document.getElementById(svgMap[k[0]]).setAttribute('stroke', '#1D9E75');
+    const cm  = parseFloat(k[1].toFixed(1));
+    const col = tireColor(cm, maxK);
+    document.getElementById(svgMap[k[0]]).setAttribute('fill', col.fill);
+    document.getElementById(svgMap[k[0]]).setAttribute('stroke', col.stroke);
     const lbl = document.getElementById(lblMap[k[0]]);
     lbl.setAttribute('visibility', 'visible');
-    lbl.textContent = parseFloat(k[1]).toFixed(1) + ' cm';
+    lbl.textContent = cm.toFixed(1) + ' cm';
+    lbl.setAttribute('fill', lblColor(cm, maxK));
   });
 
+  // Detail-Boxen
   detailEl.innerHTML = '<div class="section-title">Empfehlung</div>' +
     [keil1, keil2].map(k => {
-      const cm  = parseFloat(k[1]).toFixed(1);
-      const cls = parseFloat(cm) > maxK * 0.8 ? 'keil-warn' : 'keil-ok';
+      const cm  = parseFloat(k[1].toFixed(1));
+      const cls = keilClass(cm, maxK);
+      const sub = cm > maxK ? 'Nicht möglich – Fahrzeug neu positionieren' : 'Keil unterlegen';
       return '<div class="keil-box ' + cls + '">' +
         '<div><div class="keil-title">' + names[k[0]] + ' (' + k[0] + ')</div>' +
-        '<div class="keil-sub">Keil unterlegen</div></div>' +
-        '<div class="keil-cm">' + cm + ' cm</div></div>';
+        '<div class="keil-sub">' + sub + '</div></div>' +
+        '<div class="keil-cm">' + cm.toFixed(1) + ' cm</div></div>';
     }).join('');
 }
 
-// Service Worker registrieren (Offline-Fähigkeit)
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
-
 loadSettings();
 berechne();
 </script>
