@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="Nivellierung">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Womo Nivellierung V1.0</title>
+<title>Womo Nivellierung V1.1</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; overscroll-behavior: none; }
@@ -63,7 +63,7 @@ h1 { font-size: 18px; font-weight: 500; margin-bottom: 1rem; padding-top: 0.5rem
 </head>
 <body>
 <div class="app">
-  <h1>Womo Nivellierung</h1>
+  <h1>Womo Nivellierung V1.1</h1>
 
   <!-- Verbindung -->
   <div class="card">
@@ -278,6 +278,8 @@ function berechne() {
   const aRad = alpha * Math.PI / 180;
   const bRad = beta  * Math.PI / 180;
 
+  // alpha > 0: vorne geneigt → hinten tiefer (HL/HR)
+  // beta  > 0: rechts geneigt → links tiefer (VL/HL)
   const hoehen = {
     VL:  0,
     VR: -Math.tan(bRad) * spur,
@@ -287,7 +289,9 @@ function berechne() {
   const minH = Math.min(...Object.values(hoehen));
   const rel  = {};
   for (const k in hoehen) rel[k] = hoehen[k] - minH;
-  const sorted = Object.entries(rel).sort((a, b) => b[1] - a[1]);
+  // Sortiere aufsteigend, damit die tiefsten Räder (kleinste relative Höhe)
+  // zuerst kommen. Diese Räder müssen die Keile bekommen.
+  const sorted = Object.entries(rel).sort((a, b) => a[1] - b[1]);
 
   const svgMap = { VL:'r-vl', VR:'r-vr', HL:'r-hl', HR:'r-hr' };
   const lblMap = { VL:'lbl-vl', VR:'lbl-vr', HL:'lbl-hl', HR:'lbl-hr' };
