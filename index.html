@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="Nivellierung">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Womo Nivellierung V1.1</title>
+<title>Womo Nivellierung V1.2</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; overscroll-behavior: none; }
@@ -63,7 +63,7 @@ h1 { font-size: 18px; font-weight: 500; margin-bottom: 1rem; padding-top: 0.5rem
 </head>
 <body>
 <div class="app">
-  <h1>Womo Nivellierung V1.1</h1>
+  <h1>Womo Nivellierung V1.2</h1>
 
   <!-- Verbindung -->
   <div class="card">
@@ -133,11 +133,11 @@ h1 { font-size: 18px; font-weight: 500; margin-bottom: 1rem; padding-top: 0.5rem
         <div class="grid2">
           <!-- Quer zuerst, dann Längs -->
           <div class="metric">
-            <div class="lbl">Quer (β)</div>
+            <div class="lbl">Quer (α)</div>
             <div class="val" id="val-quer">–</div>
           </div>
           <div class="metric">
-            <div class="lbl">Längs (α)</div>
+            <div class="lbl">Längs (β)</div>
             <div class="val" id="val-laengs">–</div>
           </div>
         </div>
@@ -227,10 +227,10 @@ function onData(event) {
   try {
     const val = new TextDecoder().decode(event.target.value);
     const d = JSON.parse(val);
-    alpha = d.a;
-    beta  = d.b;
-    document.getElementById('val-laengs').textContent = alpha.toFixed(1) + '°';
-    document.getElementById('val-quer').textContent   = beta.toFixed(1)  + '°';
+    alpha = d.a;  // Quer-Neigung
+    beta  = d.b;  // Längs-Neigung
+    document.getElementById('val-laengs').textContent = beta.toFixed(1) + '°';
+    document.getElementById('val-quer').textContent   = alpha.toFixed(1)  + '°';
     updateBubble();
     berechne();
   } catch(e) {}
@@ -238,8 +238,8 @@ function onData(event) {
 
 function updateBubble() {
   const maxT = 10;
-  const cx = 50 + Math.max(-42, Math.min(42, (beta  / maxT) * 42));
-  const cy = 50 + Math.max(-42, Math.min(42, (alpha / maxT) * 42));
+  const cx = 50 + Math.max(-42, Math.min(42, (alpha / maxT) * 42));  // Quer-Neigung → links/rechts
+  const cy = 50 + Math.max(-42, Math.min(42, (beta  / maxT) * 42));  // Längs-Neigung → oben/unten
   const b = document.getElementById('bubble');
   b.style.left = cx + '%';
   b.style.top  = cy + '%';
@@ -275,16 +275,16 @@ function berechne() {
   const spur = parseFloat(document.getElementById('inp-spur').value);
   const rad  = parseFloat(document.getElementById('inp-rad').value);
   const maxK = parseFloat(document.getElementById('inp-maxkeil').value);
-  const aRad = alpha * Math.PI / 180;
-  const bRad = beta  * Math.PI / 180;
+  const aRad = alpha * Math.PI / 180;  // Quer-Neigung
+  const bRad = beta  * Math.PI / 180;  // Längs-Neigung
 
-  // alpha > 0: vorne geneigt → hinten tiefer (HL/HR)
-  // beta  > 0: rechts geneigt → links tiefer (VL/HL)
+  // alpha > 0: rechts geneigt → links tiefer (VL/HL)
+  // beta  > 0: vorne geneigt → hinten tiefer (HL/HR)
   const hoehen = {
     VL:  0,
-    VR: -Math.tan(bRad) * spur,
-    HL: -Math.tan(aRad) * rad,
-    HR: -Math.tan(aRad) * rad - Math.tan(bRad) * spur
+    VR: -Math.tan(aRad) * spur,  // aRad = alpha = Quer
+    HL: -Math.tan(bRad) * rad,   // bRad = beta = Längs
+    HR: -Math.tan(bRad) * rad - Math.tan(aRad) * spur
   };
   const minH = Math.min(...Object.values(hoehen));
   const rel  = {};
