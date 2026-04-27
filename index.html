@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="Nivellierung">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Womo Nivellierung V1.3</title>
+<title>Womo Nivellierung V0.1</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; overscroll-behavior: none; }
@@ -63,7 +63,7 @@ h1 { font-size: 18px; font-weight: 500; margin-bottom: 1rem; padding-top: 0.5rem
 </head>
 <body>
 <div class="app">
-  <h1>Womo Nivellierung V1.3</h1>
+  <h1>Womo Nivellierung V0.1</h1>
 
   <!-- Verbindung -->
   <div class="card">
@@ -150,15 +150,15 @@ h1 { font-size: 18px; font-weight: 500; margin-bottom: 1rem; padding-top: 0.5rem
     <div class="section-title">Fahrzeugmaße</div>
     <div class="input-row">
       <label>Spurbreite (cm)</label>
-      <input type="number" id="inp-spur" value="190" min="100" max="300" onchange="berechne()">
+      <input type="number" id="inp-spur" value="165" min="100" max="300" onchange="berechne()">
     </div>
     <div class="input-row">
       <label>Radstand (cm)</label>
-      <input type="number" id="inp-rad" value="380" min="150" max="600" onchange="berechne()">
+      <input type="number" id="inp-rad" value="360" min="150" max="600" onchange="berechne()">
     </div>
     <div class="input-row">
       <label>Max. Keilhöhe (cm)</label>
-      <input type="number" id="inp-maxkeil" value="15" min="5" max="30" onchange="berechne()">
+      <input type="number" id="inp-maxkeil" value="12" min="5" max="30" onchange="berechne()">
     </div>
     <button class="btn btn-sm" onclick="calibrate()">Aktuelle Lage als Nullpunkt kalibrieren</button>
   </div>
@@ -271,28 +271,96 @@ function lblColor(cm, maxK) {
   return '#085041';
 }
 
+function hoehen(spurbreite,radstand,querNeigung,laengsNeigung) {
+  // querNeigung > 0: links tief
+  // laengsNeigung > 0: hinten tief
+  // Die 4 Räder liegen in einer Ebene und bilden 4 Punkte
+  // auf dieser Ebene. Die Punkte sind P0, P1, P2, P3.
+  // P0 = (0, 0, 0)  tiefster Punkt
+  // P1 = (0, spurbreite * cos(querNeigung), spurbreite * sin(querNeigung))
+  // P2 = (radstand * cos(laengsNeigung), 0, radstand * sin(laengsNeigung))
+  // P3 = (radstand * cos(laengsNeigung), spurbreite * cos(querNeigung),
+  //       spurbreite * sin(querNeigung) + radstand * sin(laengsNeigung))
+  // Abhängig vom Vorzeichen der Neigungen ergeben sich verschiedene Zuordnungen
+  // der Räder zu den Punkten.
+  // querNeigung  laengsNeigung  P0  P1  P2  P3
+  // >0           >0             HL  HR  VL  VR
+  // >0           <0             VL  VR  HL  HR
+  // <0           >0             HR  HL  VR  VL
+  // <0           <0             VR  VR  HR  HL
+  // Für die Lage und Höhe der Unterlegkeile müssen die Höhen der Punkte P1, P2 
+  // berechnet werden.
+  // Die beiden Keile kommen unter die Punkte P0 und den Punkt P1 oder P2, je nach dem
+  // welcher von beiden tiefer liegt. 
+  // Zurückgegeben werden die Keilhöhen der Räder HL, HR, VL, VR 
+  // wobei die Räder die keinen Keil brauchen eine Höhe von 0 bekommen. 
+  
+  const aRad = Math.abs(querNeigung) * Math.PI / 180;
+  const bRad = Math.abs(laengsNeigung) * Math.PI / 180;
+
+  // Keilhöhen der Punkte P1, P2, P3 relativ zu P0
+  
+  maxH = spurbreite * Math.sin(aRad) + radstand * Math.sin(bRad);
+  P0 = maxH;
+  if (spurbreite * Math.sin(aRad) < radstand * Math.sin(bRad)) {
+    P1 = maxH - spurbreite * Math.sin(aRad);
+    P2 = 0;
+  } else {
+    P1 = 0;
+    P2 = maxH - radstand * Math.sin(bRad);
+  }
+  P3 = 0;
+
+  if (querNeigung > 0) {
+    if (laengsNeigung > 0) {
+      // Fall: quer > 0, laengs > 0
+      // z. B. Zuordnung: P0=HL, P1=HR, P2=VL, P3=VR
+      return {
+        VL: P2,
+        VR: P3,
+        HL: P0,
+        HR: P1
+      };
+    } else {
+      // Fall: quer > 0, laengs < 0
+      // z. B. Zuordnung: P0=VL, P1=VR, P2=HL, P3=HR
+      return {
+        VL: P0,
+        VR: P1,
+        HL: P2,
+        HR: P3
+      };
+    }
+  } else {
+    if (laengsNeigung > 0) {
+      // Fall: quer < 0, laengs > 0
+      // z. B. Zuordnung: P0=HR, P1=HL, P2=VR, P3=VL
+      return {
+        VL: P3,
+        VR: P2,
+        HL: P1,
+        HR: P0
+      };
+    } else {
+      // Fall: quer < 0, laengs < 0
+      // z. B. Zuordnung: P0=VR, P1=VL, P2=HR, P3=HL
+      return {
+        VL: P1,
+        VR: P0,
+        HL: P3,
+        HR: P2
+      };      
+    }
+  }
+}
+
 function berechne() {
   const spur = parseFloat(document.getElementById('inp-spur').value);
   const rad  = parseFloat(document.getElementById('inp-rad').value);
   const maxK = parseFloat(document.getElementById('inp-maxkeil').value);
-  const aRad = alpha * Math.PI / 180;  // Quer-Neigung
-  const bRad = beta  * Math.PI / 180;  // Längs-Neigung
 
-  // alpha > 0: rechts geneigt → links tiefer (VL/HL)
-  // beta  > 0: hinten geneigt → vorne tiefer (VL/VR)
-  const hoehen = {
-    VL:  0,
-    VR: -Math.tan(aRad) * spur,  // aRad = alpha = Quer
-    HL:  Math.tan(bRad) * rad,   // bRad = beta = Längs, Vorzeichen getauscht
-    HR:  Math.tan(bRad) * rad - Math.tan(aRad) * spur
-  };
-  const minH = Math.min(...Object.values(hoehen));
-  const rel  = {};
-  for (const k in hoehen) rel[k] = hoehen[k] - minH;
-  // Sortiere aufsteigend, damit die tiefsten Räder (kleinste relative Höhe)
-  // zuerst kommen. Diese Räder müssen die Keile bekommen.
-  const sorted = Object.entries(rel).sort((a, b) => a[1] - b[1]);
-
+  const raeder = hoehen(spur, rad, alpha, beta);
+  
   const svgMap = { VL:'r-vl', VR:'r-vr', HL:'r-hl', HR:'r-hr' };
   const lblMap = { VL:'lbl-vl', VR:'lbl-vr', HL:'lbl-hl', HR:'lbl-hr' };
 
@@ -312,16 +380,12 @@ function berechne() {
     return;
   }
 
-  const keil1 = sorted[0];
-  const keil2 = sorted[1];
-
-  // Räder einfärben
-  [keil1, keil2].forEach(k => {
-    const cm  = parseFloat(k[1].toFixed(1));
+  Object.entries(raeder).forEach(([key, val]) => {
+    const cm  = parseFloat(val.toFixed(1));
     const col = tireColor(cm, maxK);
-    document.getElementById(svgMap[k[0]]).setAttribute('fill', col.fill);
-    document.getElementById(svgMap[k[0]]).setAttribute('stroke', col.stroke);
-    const lbl = document.getElementById(lblMap[k[0]]);
+    document.getElementById(svgMap[key]).setAttribute('fill', col.fill);
+    document.getElementById(svgMap[key]).setAttribute('stroke', col.stroke);
+    const lbl = document.getElementById(lblMap[key]);
     lbl.setAttribute('visibility', 'visible');
     lbl.textContent = cm.toFixed(1) + ' cm';
     lbl.setAttribute('fill', lblColor(cm, maxK));
